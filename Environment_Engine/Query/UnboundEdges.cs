@@ -1,4 +1,4 @@
-/*
+﻿/*
  * This file is part of the Buildings and Habitats object Model (BHoM)
  * Copyright (c) 2015 - 2019, the respective contributors. All rights reserved.
  *
@@ -40,24 +40,26 @@ namespace BH.Engine.Environment
         /***************************************************/
 
         [Description("Determines whether the space is closed by ensuring all edges are connected to other elements")]
-        [Input("panels", "The collection of Environment Panels that represent the space to check")]
-        [Output("isClosed", "True if the space is closed, false otherwise")]
-        public static bool IsClosed(this List<Panel> panels)
+        [Input("panelsAsSpace", "The collection of Environment Panels that represent the space to check")]
+        [Output("unboundEdges", "The unbound edges of the space")]
+        public static List<Line> UnboundEdges(this List<Panel> panelsAsSpace)
         {
             //Check that each edge is connected to at least one other edge
             List<Line> edgeParts = new List<Line>();
-            foreach (Panel p in panels)
+            foreach (Panel p in panelsAsSpace)
                 edgeParts.AddRange(p.ToLines());
 
             List<Line> unique = edgeParts.Distinct().ToList();
 
-            foreach(Line l in unique)
+            List<Line> unboundEdges = new List<Line>();
+
+            foreach (Line l in unique)
             {
-                if(edgeParts.Where(x => x.BooleanIntersection(l) != null).ToList().Count < 2)
-                    return false;
+                if (edgeParts.Where(x => x.BooleanIntersection(l) != null).ToList().Count < 2)
+                    unboundEdges.Add(l);
             }
 
-            return true;
+            return unboundEdges;
         }
     }
 }

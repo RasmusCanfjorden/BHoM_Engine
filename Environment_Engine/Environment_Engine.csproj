@@ -106,6 +106,7 @@
     <Compile Include="Modify\AddAdjacentSpace.cs" />
     <Compile Include="Modify\AddOpening.cs" />
     <Compile Include="Compute\MergeBuildingElements.cs" />
+    <Compile Include="Modify\CloseSpace.cs" />
     <Compile Include="Modify\Copy.cs" />
     <Compile Include="Modify\SetPanelType.cs" />
     <Compile Include="Modify\AddFragment.cs" />
@@ -140,6 +141,7 @@
     <Compile Include="Query\AltitudeRange.cs" />
     <Compile Include="Query\Altitude.cs" />
     <Compile Include="Query\Thickness.cs" />
+    <Compile Include="Query\UnboundEdges.cs" />
     <Compile Include="Query\UnconnectedEdges.cs" />
     <Compile Include="Query\ElementsNotMatched.cs" />
     <Compile Include="Query\ExposedToSun.cs" />
