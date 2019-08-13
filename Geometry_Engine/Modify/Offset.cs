@@ -144,5 +144,145 @@ namespace BH.Engine.Geometry
         }
 
         /***************************************************/
+        public static PolyCurve Offset(this PolyCurve curve, double offset, Vector normal, bool extend = false)
+        {
+            if (!curve.IsPlanar())
+            {
+                BH.Engine.Reflection.Compute.RecordError("Offset works only on planar curves");
+                return null;
+            }
+            if (curve.IsSelfIntersecting())
+            {
+                BH.Engine.Reflection.Compute.RecordError("Offset works only on non-self intersecting curves");
+                return null;
+            }
+            List<ICurve> ICrvs = new List<ICurve>(curve.Curves);
+            PolyCurve result = new PolyCurve();
+            if (ICrvs[0] is Circle)
+            {
+                result.Curves.Add(Offset((Circle)ICrvs[0], offset, normal));
+                return result;
+            }
+            //First - offseting each individual element
+            List<ICurve> crvs = new List<ICurve>();
+            foreach (ICurve crv in curve.Curves)
+            {
+                if (crv is Arc)
+                {
+                    Arc arc = new Arc();
+                    arc = ((Arc)crv).Clone();
+                    crvs.Add(arc.Offset(offset, normal));
+                }
+                else
+                {
+                    Line ln = new Line();
+                    ln = ((Line)crv).Clone();
+                    Vector mv = new Vector();
+                    mv = ln.TangentAtPoint(ln.Start).CrossProduct(normal);
+                    double mvScale = new double();
+                    mvScale = offset / mv.Length();
+                    mv *= mvScale;
+                    ln.Start.X += mv.X;
+                    ln.Start.Y += mv.Y;
+                    ln.Start.Z += mv.Z;
+                    ln.End.X += mv.X;
+                    ln.End.Y += mv.Y;
+                    ln.End.Z += mv.Z;
+                    crvs.Add(ln);
+                }
+            }
+            List<ICurve> resultList = new List<ICurve>();
+            List<Point> interPts = new List<Point>();
+            if (curve.IIsClosed())
+            {
+                Line inf1 = Create.Line(crvs[crvs.Count - 1].IEndPoint(), crvs[crvs.Count - 1].IEndDir());
+                Line inf2 = Create.Line(crvs[0].IStartPoint(), -crvs[0].IStartDir());
+                if (crvs[0].ICurveIntersections(crvs[crvs.Count - 1]).Count > 0)
+                {
+                    interPts.Add(crvs[0].ICurveIntersections(crvs[crvs.Count - 1])[0]);
+                }
+                else
+                {
+                    interPts.Add(inf1.LineIntersection(inf2));
+                }
+            }
+            else
+            {
+                interPts.Add(crvs[0].IStartPoint());
+            }
+            for (int i = 0; i < crvs.Count - 1; i++)
+            {
+                Line inf1 = new Line();
+                Line inf2 = new Line();
+                bool complete = false;
+                if (crvs[i].ICurveIntersections(crvs[i + 1]).Count > 0)
+                {
+                    interPts.Add(crvs[i].ICurveIntersections(crvs[i + 1])[crvs[i].ICurveIntersections(crvs[i + 1]).Count - 1]);
+                    complete = true;
+                }
+                else if (complete == false)
+                {
+                    inf1 = Create.Line(crvs[i].IEndPoint(), crvs[i].IEndPoint() + crvs[i].IEndDir() * offset * crvs[i].ILength());
+                    inf2 = Create.Line(crvs[i + 1].IStartPoint(), crvs[i + 1].IStartPoint() - crvs[i + 1].IStartDir() * offset * crvs[i + 1].ILength());
+                    if (inf1.ILineIntersections(inf2).Count > 0)
+                    {
+                        interPts.Add(inf1.LineIntersection(inf2));
+                        complete = true;
+                    }
+                }
+                if (complete == false)
+                {
+                    inf1 = Create.Line(crvs[i].IEndPoint(), crvs[i].IEndDir());
+                    if (crvs[i + 1].ILineIntersections(inf1).Count > 0)
+                    {
+                        interPts.Add(crvs[i + 1].ILineIntersections(inf1)[0]);
+                        complete = true;
+                    }
+                }
+                if (complete == false)
+                {
+                    inf2 = Create.Line(crvs[i + 1].IStartPoint(), -crvs[i + 1].IStartDir());
+                    if (crvs[i].ILineIntersections(inf2).Count > 0)
+                    {
+                        interPts.Add(crvs[i].ILineIntersections(inf2)[0]);
+                        complete = true;
+                    }
+                }
+                if (complete == false)
+                {
+                    interPts.Add(inf1.LineIntersection(inf2));
+                }
+            }
+            if (curve.IsClosed())
+            {
+                interPts.Add(interPts[0]);
+            }
+            else
+            {
+                interPts.Add(crvs[crvs.Count - 1].IEndPoint());
+            }
+            List<ICurve> temp = new List<ICurve>();
+            for (int i = 0; i < crvs.Count; i++)
+            {
+                temp = crvs[i].TrimExtend(interPts[i], interPts[i + 1], extend);
+                foreach (ICurve crv in temp)
+                {
+                    resultList.Add(crv);
+                }
+            }
+            // List<ICurve> resultCurves = new List<ICurve>();
+            //    for(int i=0;i<crvs.Count;i++)
+            // {
+            //     if(resultList[i].ICurveIntersections(resultList[(i+1)%resultList.Count]).Count>1)
+            //     {
+            //         resultList[i]=resultList[i].TrimExtend( resultList[i].IStartPoint() ,resultList[i].ICurveIntersections(resultList[(i + 1) % resultList.Count])[1], extend);
+            //         resultList[(i + 1) % resultList.Count] = resultList[(i + 1) % resultList.Count].TrimExtend( resultList[i].ICurveIntersections(resultList[(i + 1) % resultList.Count])[1], resultList[(i + 1) % resultList.Count].IStartPoint(), extend);
+            //     }
+            //}
+            return new PolyCurve
+            {
+                Curves = resultList
+            };
+        }
     }
 }

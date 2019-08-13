@@ -1,4 +1,4 @@
-/*
+﻿/*
  * This file is part of the Buildings and Habitats object Model (BHoM)
  * Copyright (c) 2015 - 2018, the respective contributors. All rights reserved.
  *
@@ -35,19 +35,19 @@ namespace BH.Engine.Geometry
         /**** Public Methods - Curves                   ****/
         /***************************************************/
 
-        public static Line Extend(this Line curve, double start = 0.0, double end = 0.0)
+        public static Line Trim(this Line curve, double start = 0.0, double end = 0.0)
         {
-            Vector dir = curve.Direction();
-            return new Line { Start = curve.Start - dir * start, End = curve.End + dir * end };
+            return curve.Extend(-start, -end);
         }
+
         /***************************************************/
-        public static Line Extend(this Line curve, Point startPoint, Point endPoint)
+        public static Line Trim(this Line curve, Point startPoint, Point endPoint)
         {
             return new Line { Start = startPoint, End = endPoint };
         }
 
         /***************************************************/
-        public static Arc Extend(this Arc curve, Point startPoint, Point endPoint)
+        public static Arc Trim(this Arc curve, Point startPoint, Point endPoint)
         {
             Cartesian coordinateSystem = new Cartesian(curve.CoordinateSystem.Origin,
                 (startPoint - curve.CoordinateSystem.Origin).Normalise(),
@@ -65,47 +65,47 @@ namespace BH.Engine.Geometry
             };
         }
         /***************************************************/
-        public static Circle Extend(this Circle curve, Point startPoint, Point endPoint)
+        public static Circle Trim(this Circle curve, Point startPoint, Point endPoint)
         {
-            Reflection.Compute.RecordNote("Can't Extend closed models.");
+            Reflection.Compute.RecordNote("Can't Trim closed models.");
             return curve;
         }
         /***************************************************/
-        public static Circle Extend(this Circle curve, double startPoint, double endPoint)
+        public static Circle Trim(this Circle curve, double startPoint, double endPoint)
         {
-            Reflection.Compute.RecordNote("Can't Extend closed models.");
+            Reflection.Compute.RecordNote("Can't Trim closed models.");
             return curve;
         }
         /***************************************************/
-        public static Ellipse Extend(this Ellipse curve, Point startPoint, Point endPoint)
+        public static Ellipse Trim(this Ellipse curve, Point startPoint, Point endPoint)
         {
-            Reflection.Compute.RecordNote("Can't Extend closed models.");
+            Reflection.Compute.RecordNote("Can't Trim closed models.");
             return curve;
         }
         /***************************************************/
-        public static Ellipse Extend(this Ellipse curve, double startPoint, double endPoint)
+        public static Ellipse Trim(this Ellipse curve, double startPoint, double endPoint)
         {
-            Reflection.Compute.RecordNote("Can't Extend closed models.");
+            Reflection.Compute.RecordNote("Can't Trim closed models.");
             return curve;
         }
         /***************************************************/
         [NotImplemented]
-        public static NurbsCurve Extend(this NurbsCurve curve, Point startPoint, Point endPoint)
+        public static NurbsCurve Trim(this NurbsCurve curve, Point startPoint, Point endPoint)
         {
             throw new NotImplementedException();
         }
         /***************************************************/
         [NotImplemented]
-        public static NurbsCurve Extend(this NurbsCurve curve, double startPoint, double endPoint)
+        public static NurbsCurve Trim(this NurbsCurve curve, double startPoint, double endPoint)
         {
             throw new NotImplementedException();
         }
         /***************************************************/
-        public static Polyline Extend(this Polyline curve, Point startPoint, Point endPoint)
+        public static Polyline Trim(this Polyline curve, Point startPoint, Point endPoint)
         {
             if (curve.IsClosed())
             {
-                Reflection.Compute.RecordNote("Can't Extend closed models.");
+                Reflection.Compute.RecordNote("Can't Trim closed models.");
                 return curve;
             }
             List<Point> result = new List<Point>();
@@ -118,11 +118,11 @@ namespace BH.Engine.Geometry
             };
         }
         /***************************************************/
-        public static Polyline Extend(this Polyline curve, double start, double end)
+        public static Polyline Trim(this Polyline curve, double start, double end)
         {
             if (curve.IsClosed())
             {
-                Reflection.Compute.RecordNote("Can't Extend closed models.");
+                Reflection.Compute.RecordNote("Can't Trim closed models.");
                 return curve;
             }
             Line first = new Line { Start = curve.ControlPoints[0], End = curve.ControlPoints[1] };
@@ -139,17 +139,17 @@ namespace BH.Engine.Geometry
             };
         }
         /***************************************************/
-        public static PolyCurve Extend(this PolyCurve curve, Point startPoint, Point endPoint)
+        public static PolyCurve Trim(this PolyCurve curve, Point startPoint, Point endPoint)
         {
             if (curve.IsClosed())
             {
-                Reflection.Compute.RecordNote("Can't Extend closed models.");
+                Reflection.Compute.RecordNote("Can't Trim closed models.");
                 return curve;
             }
             List<ICurve> result = new List<ICurve>();
             result = curve.Curves;
-            result[0] = result[0].IExtend(startPoint, result[0].IEndPoint());
-            result[result.Count - 1] = result[result.Count - 1].IExtend(result[result.Count - 1].IStartPoint(), endPoint);
+            result[0] = result[0].ITrim(startPoint, result[0].IEndPoint());
+            result[result.Count - 1] = result[result.Count - 1].ITrim(result[result.Count - 1].IStartPoint(), endPoint);
             return new PolyCurve
             {
                 Curves = result
@@ -157,17 +157,17 @@ namespace BH.Engine.Geometry
 
         }
         /***************************************************/
-        public static PolyCurve Extend(this PolyCurve curve, double start, double end)
+        public static PolyCurve Trim(this PolyCurve curve, double start, double end)
         {
             if (curve.IsClosed())
             {
-                Reflection.Compute.RecordNote("Can't Extend closed models.");
+                Reflection.Compute.RecordNote("Can't Trim closed models.");
                 return curve;
             }
             List<ICurve> result = new List<ICurve>();
             result = curve.Curves;
-            result[0] = result[0].IExtend(start, 0);
-            result[result.Count - 1] = result[result.Count - 1].IExtend(0, end);
+            result[0] = result[0].ITrim(start, 0);
+            result[result.Count - 1] = result[result.Count - 1].ITrim(0, end);
             return new PolyCurve
             {
                 Curves = result
@@ -177,19 +177,15 @@ namespace BH.Engine.Geometry
         /***************************************************/
         /**** Public Methods - Interfaces               ****/
         /***************************************************/
-        public static ICurve IExtend(this ICurve curve, Point startPoint, Point endPoint, bool isExtend = true)
+        public static ICurve ITrim(this ICurve curve, Point startPoint, Point endPoint)
         {
-            if (isExtend)
-                return Extend(curve as dynamic, startPoint, endPoint);
-            else
-                return ExtendTangent(curve as dynamic, startPoint, endPoint);
+            return Trim(curve as dynamic, startPoint, endPoint);
         }
         /***************************************************/
-        public static ICurve IExtend(this ICurve curve, double start, double end)
+        public static ICurve ITrim(this ICurve curve, double start, double end)
         {
-            return Extend(curve as dynamic, start, end);
+            return Trim(curve as dynamic, start, end);
         }
         /***************************************************/
     }
 }
-

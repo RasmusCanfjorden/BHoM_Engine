@@ -100,6 +100,7 @@
     <Compile Include="Create\Line.cs" />
     <Compile Include="Create\Ellipse.cs" />
     <Compile Include="Create\IntegrationSlice.cs" />
+    <Compile Include="Modify\ExtendTangent.cs" />
     <Compile Include="Modify\Offset.cs" />
     <Compile Include="Modify\CleanPolyline.cs" />
     <Compile Include="Modify\CollapseToPolyline.cs" />
@@ -111,6 +112,8 @@
     <Compile Include="Modify\Reverse.cs" />
     <Compile Include="Modify\Scale.cs" />
     <Compile Include="Modify\SplitAtPoints.cs" />
+    <Compile Include="Modify\Trim.cs" />
+    <Compile Include="Modify\TrimExtend.cs" />
     <Compile Include="Query\BasisFunction.cs" />
     <Compile Include="Query\Centroid.cs" />
     <Compile Include="Query\CurveIntersections.cs" />
