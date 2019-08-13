@@ -193,6 +193,7 @@ namespace BH.Engine.Geometry
             }
             List<ICurve> resultList = new List<ICurve>();
             List<Point> interPts = new List<Point>();
+            // from this point on, we are looking for crossing points of curves to trim/extend them
             if (curve.IIsClosed())
             {
                 Line inf1 = Create.Line(crvs[crvs.Count - 1].IEndPoint(), crvs[crvs.Count - 1].IEndDir());
@@ -261,6 +262,7 @@ namespace BH.Engine.Geometry
             {
                 interPts.Add(crvs[crvs.Count - 1].IEndPoint());
             }
+            //here, we recreate the polycurve based on our control points and external extend/trim functions
             List<ICurve> temp = new List<ICurve>();
             for (int i = 0; i < crvs.Count; i++)
             {
@@ -270,15 +272,6 @@ namespace BH.Engine.Geometry
                     resultList.Add(crv);
                 }
             }
-            // List<ICurve> resultCurves = new List<ICurve>();
-            //    for(int i=0;i<crvs.Count;i++)
-            // {
-            //     if(resultList[i].ICurveIntersections(resultList[(i+1)%resultList.Count]).Count>1)
-            //     {
-            //         resultList[i]=resultList[i].TrimExtend( resultList[i].IStartPoint() ,resultList[i].ICurveIntersections(resultList[(i + 1) % resultList.Count])[1], extend);
-            //         resultList[(i + 1) % resultList.Count] = resultList[(i + 1) % resultList.Count].TrimExtend( resultList[i].ICurveIntersections(resultList[(i + 1) % resultList.Count])[1], resultList[(i + 1) % resultList.Count].IStartPoint(), extend);
-            //     }
-            //}
             return new PolyCurve
             {
                 Curves = resultList
