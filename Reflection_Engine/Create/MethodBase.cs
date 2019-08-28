@@ -33,7 +33,7 @@ namespace BH.Engine.Serialiser
         /**** Public Methods                    ****/
         /*******************************************/
 
-        public static MethodBase MethodBase(Type type, string methodName, List<string> paramTypes)
+        public static MethodBase MethodBase(Type type, string methodName, List<string> paramTypeNames)
         {
             List<MethodBase> methods;
             if (methodName == ".ctor")
@@ -48,12 +48,12 @@ namespace BH.Engine.Serialiser
                 if (method.Name == methodName)
                 {
                     ParameterInfo[] parameters = method.ParametersWithConstraints();
-                    if (parameters.Length == paramTypes.Count)
+                    if (parameters.Length == paramTypeNames.Count)
                     {
                         bool matching = true;
-                        List<string> names = parameters.Select(x => Convert.ToJson(x.ParameterType)).ToList();
-                        for (int i = 0; i < paramTypes.Count; i++)
-                            matching &= names[i] == paramTypes[i];
+                        List<string> names = parameters.Select(x => x.ParameterType.Name).ToList();
+                        for (int i = 0; i < paramTypeNames.Count; i++)
+                            matching &= names[i] == paramTypeNames[i];
 
                         if (matching)
                         {
@@ -63,6 +63,26 @@ namespace BH.Engine.Serialiser
                 }
             }
             return null;
+        }
+
+        /*******************************************/
+
+        public static MethodBase MethodBase(Type type, string methodName, List<Type> paramTypes)
+        {
+            MethodBase method;
+            if (methodName == ".ctor")
+                method = type.GetConstructor(paramTypes.ToArray());
+            else
+                method = type.GetMethod(methodName, paramTypes.ToArray());
+
+            // the above will return null if the type is a generic type
+            // that is because we serialise a generic method with its constraints
+            // rather than serialising the generics
+            if (method != null)
+                return method;
+
+            // So, let's try the other overload
+            return MethodBase(type, methodName, paramTypes.Select(x => x.Name).ToList());
         }
 
         /*******************************************/

@@ -59,6 +59,18 @@ namespace BH.Engine.Reflection
             return m_AllMethodList;
         }
 
+        /***************************************************/
+
+        public static List<MethodBase> ExternalMethodList()
+        {
+            // Checking for an empty list may be dangerous, we should give different meaning to null and empty lists
+            // What if m_ExternalMethodList is empty after calling ExtractAllMethods() ?
+            if (m_ExternalMethodList == null || m_ExternalMethodList.Count <= 0)
+                ExtractAllMethods();
+
+            return m_ExternalMethodList;
+        }
+
 
         /***************************************************/
         /**** Private Methods                           ****/
@@ -90,6 +102,15 @@ namespace BH.Engine.Reflection
                                 m_BHoMMethodList.AddRange(typeMethods.Where(x => x.IsLegal()));
                             }
 
+                            if (type.Name == "External")
+                            {
+                                MethodInfo getExternalMethods = type.GetMethod("Methods");
+                                if (getExternalMethods != null)
+                                    m_ExternalMethodList.AddRange((List<MethodInfo>)getExternalMethods.Invoke(null, null));
+                                MethodInfo getExternalCtor = type.GetMethod("Constructors");
+                                if (getExternalCtor != null)
+                                    m_ExternalMethodList.AddRange((List<ConstructorInfo>)getExternalCtor.Invoke(null, null));
+                            }
                             // Get everything
                             StoreAllMethods(type);
                         }
@@ -128,6 +149,7 @@ namespace BH.Engine.Reflection
 
         private static List<MethodInfo> m_BHoMMethodList = new List<MethodInfo>();
         private static List<MethodBase> m_AllMethodList = new List<MethodBase>();
+        private static List<MethodBase> m_ExternalMethodList = new List<MethodBase>();
 
         /***************************************************/
     }
