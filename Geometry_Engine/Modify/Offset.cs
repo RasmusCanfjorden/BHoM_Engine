@@ -165,6 +165,8 @@ namespace BH.Engine.Geometry
             }
             //First - offseting each individual element
             List<ICurve> crvs = new List<ICurve>();
+            List<ICurve> resultList = new List<ICurve>();
+            bool reversed = false;
             foreach (ICurve crv in curve.Curves)
             {
                 if (crv is Arc)
@@ -182,96 +184,257 @@ namespace BH.Engine.Geometry
                     double mvScale = new double();
                     mvScale = offset / mv.Length();
                     mv *= mvScale;
-                    ln.Start.X += mv.X;
-                    ln.Start.Y += mv.Y;
-                    ln.Start.Z += mv.Z;
-                    ln.End.X += mv.X;
-                    ln.End.Y += mv.Y;
-                    ln.End.Z += mv.Z;
+                    ln.Start = ln.Start + mv;
+                    ln.End += mv;
                     crvs.Add(ln);
                 }
             }
-            List<ICurve> resultList = new List<ICurve>();
-            List<Point> interPts = new List<Point>();
-            // from this point on, we are looking for crossing points of curves to trim/extend them
-            if (curve.IIsClosed())
+            int lngstIndex = 0;
+            for (int i = 1; i < crvs.Count; i++)
             {
-                Line inf1 = Create.Line(crvs[crvs.Count - 1].IEndPoint(), crvs[crvs.Count - 1].IEndDir());
-                Line inf2 = Create.Line(crvs[0].IStartPoint(), -crvs[0].IStartDir());
-                if (crvs[0].ICurveIntersections(crvs[crvs.Count - 1]).Count > 0)
+                if (crvs[i].ILength() > crvs[lngstIndex].ILength())
                 {
-                    interPts.Add(crvs[0].ICurveIntersections(crvs[crvs.Count - 1])[0]);
-                }
-                else
-                {
-                    interPts.Add(inf1.LineIntersection(inf2));
+                    lngstIndex = i;
                 }
             }
-            else
-            {
-                interPts.Add(crvs[0].IStartPoint());
-            }
-            for (int i = 0; i < crvs.Count - 1; i++)
-            {
-                Line inf1 = new Line();
-                Line inf2 = new Line();
-                bool complete = false;
-                if (crvs[i].ICurveIntersections(crvs[i + 1]).Count > 0)
-                {
-                    interPts.Add(crvs[i].ICurveIntersections(crvs[i + 1])[crvs[i].ICurveIntersections(crvs[i + 1]).Count - 1]);
-                    complete = true;
-                }
-                else if (complete == false)
-                {
-                    inf1 = Create.Line(crvs[i].IEndPoint(), crvs[i].IEndPoint() + crvs[i].IEndDir() * offset * crvs[i].ILength());
-                    inf2 = Create.Line(crvs[i + 1].IStartPoint(), crvs[i + 1].IStartPoint() - crvs[i + 1].IStartDir() * offset * crvs[i + 1].ILength());
-                    if (inf1.ILineIntersections(inf2).Count > 0)
-                    {
-                        interPts.Add(inf1.LineIntersection(inf2));
-                        complete = true;
-                    }
-                }
-                if (complete == false)
-                {
-                    inf1 = Create.Line(crvs[i].IEndPoint(), crvs[i].IEndDir());
-                    if (crvs[i + 1].ILineIntersections(inf1).Count > 0)
-                    {
-                        interPts.Add(crvs[i + 1].ILineIntersections(inf1)[0]);
-                        complete = true;
-                    }
-                }
-                if (complete == false)
-                {
-                    inf2 = Create.Line(crvs[i + 1].IStartPoint(), -crvs[i + 1].IStartDir());
-                    if (crvs[i].ILineIntersections(inf2).Count > 0)
-                    {
-                        interPts.Add(crvs[i].ILineIntersections(inf2)[0]);
-                        complete = true;
-                    }
-                }
-                if (complete == false)
-                {
-                    interPts.Add(inf1.LineIntersection(inf2));
-                }
-            }
+            resultList.Add(crvs[lngstIndex]);
             if (curve.IsClosed())
             {
-                interPts.Add(interPts[0]);
+                if (crvs[(lngstIndex + 1) % crvs.Count].ILength() < crvs[(lngstIndex + crvs.Count - 1) % crvs.Count].ILength())
+                {
+                    crvs.Reverse();
+                    reversed = true;
+                }
             }
             else
             {
-                interPts.Add(crvs[crvs.Count - 1].IEndPoint());
-            }
-            //here, we recreate the polycurve based on our control points and external extend/trim functions
-            List<ICurve> temp = new List<ICurve>();
-            for (int i = 0; i < crvs.Count; i++)
-            {
-                temp = crvs[i].TrimExtend(interPts[i], interPts[i + 1], extend);
-                foreach (ICurve crv in temp)
+                if(lngstIndex==crvs.Count-1)
                 {
-                    resultList.Add(crv);
+                    crvs.Reverse();
+                    reversed = true;
+                }
+                else if(lngstIndex!=0)
+                {
+                    if (crvs[(lngstIndex + 1) % crvs.Count].ILength() < crvs[(lngstIndex + crvs.Count - 1) % crvs.Count].ILength())
+                    {
+                        crvs.Reverse();
+                        reversed = true;
+                    }
                 }
             }
+            if (reversed)
+                lngstIndex = crvs.Count - 1 - lngstIndex;
+            List<Point> intPts = new List<Point>();
+            List<ICurve> temp = new List<ICurve>();
+            ICurve tmp;
+            int rvrsNumber = 0;
+            bool check = false;
+                for (int i = lngstIndex + 1; i < lngstIndex + crvs.Count; i++)
+                {
+                rvrsNumber = 0;
+                    if(curve.IsClosed()&&i%crvs.Count==lngstIndex-1)
+                    {
+                        Line l11=Create.Line(crvs[i%crvs.Count].IStartPoint(),-(crvs[i % crvs.Count].IStartDir()/crvs[i % crvs.Count].IStartDir().Length())*10*Math.Abs(offset));
+                        Line l12 = Create.Line(crvs[i % crvs.Count].IEndPoint(), (crvs[i % crvs.Count].IEndDir() / crvs[i % crvs.Count].IEndDir().Length()) * 10 * Math.Abs(offset));
+                        Line l21, l22;
+                        if(reversed)
+                        {
+                            l21 = Create.Line(resultList[resultList.Count - 1].IStartPoint(), (-1) * ((resultList[resultList.Count - 1].IStartDir() / resultList[resultList.Count - 1].IStartDir().Length()) * 10 * Math.Abs(offset)));
+                            l22 = Create.Line(resultList[0].IEndPoint(), ((resultList[0].IEndDir() / resultList[0].IEndDir().Length()) * 10 * Math.Abs(offset)));
+                        }
+                        else
+                        {
+                            l21 = Create.Line(resultList[resultList.Count - 1].IEndPoint(),((resultList[resultList.Count - 1].IEndDir() / resultList[resultList.Count - 1].IEndDir().Length()) * 10 * Math.Abs(offset)));
+                            l22 = Create.Line(resultList[0].IStartPoint(), -((resultList[0].IStartDir() / resultList[0].IStartDir().Length()) * 10 * Math.Abs(offset)));
+                        }
+                        l11.Infinite = false;
+                        l12.Infinite = false;
+                        l21.Infinite = false;
+                        l22.Infinite = false;
+                    }
+                    check = false;
+                    if ((intPts = resultList[resultList.Count - 1].ICurveIntersections(crvs[i % crvs.Count])).Count > 0)
+                    {
+                        check = true;
+                    }
+                    else if (reversed)
+                    {
+                        Line ln1 = Create.Line(resultList[resultList.Count - 1].IStartPoint(), (-1) * ((resultList[resultList.Count - 1].IStartDir() / resultList[resultList.Count - 1].IStartDir().Length()) * 10 * Math.Abs(offset)));
+                        Line ln2 = Create.Line(crvs[i % crvs.Count].IEndPoint(), ((crvs[i % crvs.Count].IEndDir() / crvs[i % crvs.Count].IEndDir().Length()) * 10 * Math.Abs(offset)));
+                        ln1.Infinite = false;
+                        ln2.Infinite = false;
+                    if (resultList[resultList.Count - 1] is Line)
+                        ln1.Start = resultList[resultList.Count - 1].IEndPoint();
+                    if (crvs[i % crvs.Count] is Line)
+                        ln2.Start = crvs[i % crvs.Count].IStartPoint();
+                        if ((intPts = ln1.ICurveIntersections(crvs[i % crvs.Count])).Count > 0)
+                        {
+                            check = true;
+                        }
+                        else if ((intPts = ln2.ICurveIntersections(resultList[resultList.Count - 1])).Count > 0)
+                        {
+                            check = true;
+                        }
+                        else if ((intPts = ln2.LineIntersections(ln1)).Count > 0)
+                        {
+                            check = true;
+                        }
+                        else
+                            check = false;
+                    }
+                    else
+                    {
+                        Line ln1 = Create.Line(resultList[resultList.Count - 1].IEndPoint(), ((resultList[resultList.Count - 1].IEndDir() / resultList[resultList.Count - 1].IEndDir().Length()) * 10 * Math.Abs(offset)));
+                        Line ln2 = Create.Line(crvs[i % crvs.Count].IStartPoint(), (-1)*((crvs[i % crvs.Count].IStartDir() / crvs[i % crvs.Count].IStartDir().Length()) * 10 * Math.Abs(offset)));
+                        ln1.Infinite = false;
+                        ln2.Infinite = false;
+                    if (resultList[resultList.Count - 1] is Line)
+                        ln1.Start = resultList[resultList.Count - 1].IStartPoint();
+                    if (crvs[i % crvs.Count] is Line)
+                        ln2.Start = crvs[i % crvs.Count].IEndPoint();
+                    if ((intPts = ln1.ICurveIntersections(crvs[i % crvs.Count])).Count > 0)
+                        {
+                            check = true;
+                        }
+                        else if ((intPts = ln2.ICurveIntersections(resultList[resultList.Count - 1])).Count > 0)
+                        {
+                            check = true;
+                        }
+                        else if ((intPts = ln2.LineIntersections(ln1)).Count > 0)
+                        {
+                            check = true;
+                        }
+                        else
+                            check = false;
+                    }
+                    if (check)
+                    {
+                        if (reversed)
+                        {
+                            tmp = resultList[resultList.Count - 1].IClone();
+                            resultList.Remove(resultList[resultList.Count - 1]);
+                            temp = tmp.TrimExtend(intPts[0], tmp.IEndPoint(), extend);
+                        foreach (ICurve crv in temp)
+                        {
+                            resultList.Add(crv);
+                            rvrsNumber++;
+                            
+                        }
+                        resultList.Reverse(resultList.Count - temp.Count, temp.Count);
+                        temp = crvs[i % crvs.Count].TrimExtend(crvs[i % crvs.Count].IStartPoint(), intPts[0], extend);
+                            foreach (ICurve crv in temp)
+                            {
+                                resultList.Add(crv);
+                            rvrsNumber++;
+                            }
+                        resultList.Reverse(resultList.Count - temp.Count, temp.Count);
+                        resultList.Reverse(resultList.Count-rvrsNumber,rvrsNumber);
+                    }
+                        else
+                        {
+                            tmp = resultList[resultList.Count - 1].IClone();
+                            resultList.Remove(resultList[resultList.Count - 1]);
+                            temp = tmp.TrimExtend(tmp.IStartPoint(), intPts[0], extend);
+                            foreach (ICurve crv in temp)
+                            {
+                                resultList.Add(crv);
+                            }
+                            temp = crvs[i % crvs.Count].TrimExtend(intPts[0], crvs[i % crvs.Count].IEndPoint(), extend);
+                            foreach (ICurve crv in temp)
+                            {
+                                resultList.Add(crv);
+                            }
+                        }
+                    }
+                }
+            //result.Curves = resultList;
+            //if(curve.IsClosed()&&!result.IsClosed())
+            //{
+            //    if(reversed)
+            //    {
+            //        crvs[lngstIndex
+            //    }
+            //}
+            //List<Point> interPts = new List<Point>();
+            //// from this point on, we are looking for crossing points of curves to trim/extend them
+            //if (curve.IIsClosed())
+            //{
+            //    Line inf1 = Create.Line(crvs[crvs.Count - 1].IEndPoint(), crvs[crvs.Count - 1].IEndDir());
+            //    Line inf2 = Create.Line(crvs[0].IStartPoint(), -crvs[0].IStartDir());
+            //    if (crvs[0].ICurveIntersections(crvs[crvs.Count - 1]).Count > 0)
+            //    {
+            //        interPts.Add(crvs[0].ICurveIntersections(crvs[crvs.Count - 1])[0]);
+            //    }
+            //    else
+            //    {
+            //        interPts.Add(inf1.LineIntersection(inf2));
+            //    }
+            //}
+            //else
+            //{
+            //    interPts.Add(crvs[0].IStartPoint());
+            //}
+            //for (int i = 0; i < crvs.Count - 1; i++)
+            //{
+            //    Line inf1 = new Line();
+            //    Line inf2 = new Line();
+            //    bool complete = false;
+            //    if (crvs[i].ICurveIntersections(crvs[i + 1]).Count > 0)
+            //    {
+            //        interPts.Add(crvs[i].ICurveIntersections(crvs[i + 1])[crvs[i].ICurveIntersections(crvs[i + 1]).Count - 1]);
+            //        complete = true;
+            //    }
+            //    else if (complete == false)
+            //    {
+            //        inf1 = Create.Line(crvs[i].IEndPoint(), crvs[i].IEndPoint() + crvs[i].IEndDir() * Math.Abs(offset) * crvs[i].ILength());
+            //        inf2 = Create.Line(crvs[i + 1].IStartPoint(), crvs[i + 1].IStartPoint() - crvs[i + 1].IStartDir() * Math.Abs(offset) * crvs[i + 1].ILength());
+            //        if (inf1.ILineIntersections(inf2).Count > 0)
+            //        {
+            //            interPts.Add(inf1.LineIntersection(inf2));
+            //            complete = true;
+            //        }
+            //    }
+            //    if (complete == false)
+            //    {
+            //        inf1 = Create.Line(crvs[i].IEndPoint(), crvs[i].IEndDir());
+            //        if (crvs[i + 1].ILineIntersections(inf1).Count > 0)
+            //        {
+            //            interPts.Add(crvs[i + 1].ILineIntersections(inf1)[0]);
+            //            complete = true;
+            //        }
+            //    }
+            //    if (complete == false)
+            //    {
+            //        inf2 = Create.Line(crvs[i + 1].IStartPoint(), -crvs[i + 1].IStartDir());
+            //        if (crvs[i].ILineIntersections(inf2).Count > 0)
+            //        {
+            //            interPts.Add(crvs[i].ILineIntersections(inf2)[0]);
+            //            complete = true;
+            //        }
+            //    }
+            //    if (complete == false)
+            //    {
+            //        interPts.Add(inf1.LineIntersection(inf2));
+            //    }
+            //}
+            //if (curve.IsClosed())
+            //{
+            //    interPts.Add(interPts[0]);
+            //}
+            //else
+            //{
+            //    interPts.Add(crvs[crvs.Count - 1].IEndPoint());
+            //}
+            ////here, we recreate the polycurve based on our control points and external extend/trim functions
+           
+            //for (int i = 0; i < crvs.Count; i++)
+            //{
+            //    temp = crvs[i].TrimExtend(interPts[i], interPts[i + 1], extend);
+            //    foreach (ICurve crv in temp)
+            //    {
+            //        resultList.Add(crv);
+            //    }
+            //}
             return new PolyCurve
             {
                 Curves = resultList
