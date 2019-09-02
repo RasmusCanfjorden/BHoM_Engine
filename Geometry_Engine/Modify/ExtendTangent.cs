@@ -37,19 +37,20 @@ namespace BH.Engine.Geometry
         public static PolyCurve ExtendTangent(this Line curve, Point startPoint, Point endPoint)
         {
             List<ICurve> result = new List<ICurve>();
-            if(curve.ClosestPoint(startPoint)==curve.ClosestPoint(endPoint))
-            {
-                result.Add(new Line { Start = startPoint, End = endPoint });
-                return new PolyCurve
-                {
-                    Curves=result
-                };
-            }
-            if(!startPoint.IsOnCurve(curve))
-                result.Add(new Line { Start = startPoint, End = curve.Start });
-            result.Add(curve);
-            if(!endPoint.IsOnCurve(curve))
-                result.Add(new Line { Start = curve.End, End = endPoint});
+            //if(curve.ClosestPoint(startPoint)==curve.ClosestPoint(endPoint))
+            //{
+            //    result.Add(new Line { Start = startPoint, End = endPoint });
+            //    return new PolyCurve
+            //    {
+            //        Curves=result
+            //    };
+            //}
+            //if(!startPoint.IsOnCurve(curve))
+            //    result.Add(new Line { Start = startPoint, End = curve.Start });
+            //result.Add(curve);
+            //if(!endPoint.IsOnCurve(curve))
+            //    result.Add(new Line { Start = curve.End, End = endPoint});
+            result.Add(curve.Extend(startPoint, endPoint));
             return new PolyCurve
             {
                 Curves = result

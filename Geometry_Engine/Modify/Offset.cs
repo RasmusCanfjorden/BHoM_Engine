@@ -229,23 +229,23 @@ namespace BH.Engine.Geometry
             ICurve tmp;
             int rvrsNumber = 0;
             bool check = false;
-                for (int i = lngstIndex + 1; i < lngstIndex + crvs.Count; i++)
+                for (int i = lngstIndex + 1; i < lngstIndex + crvs.Count-1; i++)
                 {
                 rvrsNumber = 0;
                     if(curve.IsClosed()&&i%crvs.Count==lngstIndex-1)
                     {
-                        Line l11=Create.Line(crvs[i%crvs.Count].IStartPoint(),-(crvs[i % crvs.Count].IStartDir()/crvs[i % crvs.Count].IStartDir().Length())*10*Math.Abs(offset));
-                        Line l12 = Create.Line(crvs[i % crvs.Count].IEndPoint(), (crvs[i % crvs.Count].IEndDir() / crvs[i % crvs.Count].IEndDir().Length()) * 10 * Math.Abs(offset));
+                        Line l11=Create.Line(crvs[i%crvs.Count].IStartPoint(),-(crvs[i % crvs.Count].IStartDir()/crvs[i % crvs.Count].IStartDir().Length())*100*Math.Abs(offset));
+                        Line l12 = Create.Line(crvs[i % crvs.Count].IEndPoint(), (crvs[i % crvs.Count].IEndDir() / crvs[i % crvs.Count].IEndDir().Length()) * 100 * Math.Abs(offset));
                         Line l21, l22;
                         if(reversed)
                         {
-                            l21 = Create.Line(resultList[resultList.Count - 1].IStartPoint(), (-1) * ((resultList[resultList.Count - 1].IStartDir() / resultList[resultList.Count - 1].IStartDir().Length()) * 10 * Math.Abs(offset)));
-                            l22 = Create.Line(resultList[0].IEndPoint(), ((resultList[0].IEndDir() / resultList[0].IEndDir().Length()) * 10 * Math.Abs(offset)));
+                            l21 = Create.Line(resultList[resultList.Count - 1].IStartPoint(), (-1) * ((resultList[resultList.Count - 1].IStartDir() / resultList[resultList.Count - 1].IStartDir().Length()) * 100 * Math.Abs(offset)));
+                            l22 = Create.Line(resultList[0].IEndPoint(), ((resultList[0].IEndDir() / resultList[0].IEndDir().Length()) * 100 * Math.Abs(offset)));
                         }
                         else
                         {
-                            l21 = Create.Line(resultList[resultList.Count - 1].IEndPoint(),((resultList[resultList.Count - 1].IEndDir() / resultList[resultList.Count - 1].IEndDir().Length()) * 10 * Math.Abs(offset)));
-                            l22 = Create.Line(resultList[0].IStartPoint(), -((resultList[0].IStartDir() / resultList[0].IStartDir().Length()) * 10 * Math.Abs(offset)));
+                            l21 = Create.Line(resultList[resultList.Count - 1].IEndPoint(),((resultList[resultList.Count - 1].IEndDir() / resultList[resultList.Count - 1].IEndDir().Length()) * 100 * Math.Abs(offset)));
+                            l22 = Create.Line(resultList[0].IStartPoint(), -((resultList[0].IStartDir() / resultList[0].IStartDir().Length()) * 100 * Math.Abs(offset)));
                         }
                         l11.Infinite = false;
                         l12.Infinite = false;
@@ -257,10 +257,10 @@ namespace BH.Engine.Geometry
                     {
                         check = true;
                     }
-                    else if (reversed)
+                    if (reversed)
                     {
-                        Line ln1 = Create.Line(resultList[resultList.Count - 1].IStartPoint(), (-1) * ((resultList[resultList.Count - 1].IStartDir() / resultList[resultList.Count - 1].IStartDir().Length()) * 10 * Math.Abs(offset)));
-                        Line ln2 = Create.Line(crvs[i % crvs.Count].IEndPoint(), ((crvs[i % crvs.Count].IEndDir() / crvs[i % crvs.Count].IEndDir().Length()) * 10 * Math.Abs(offset)));
+                        Line ln1 = Create.Line(resultList[resultList.Count - 1].IStartPoint(), (-1) * ((resultList[resultList.Count - 1].IStartDir() / resultList[resultList.Count - 1].IStartDir().Length()) * 100 * Math.Abs(offset)));
+                        Line ln2 = Create.Line(crvs[i % crvs.Count].IEndPoint(), ((crvs[i % crvs.Count].IEndDir() / crvs[i % crvs.Count].IEndDir().Length()) * 100 * Math.Abs(offset)));
                         ln1.Infinite = false;
                         ln2.Infinite = false;
                     if (resultList[resultList.Count - 1] is Line)
@@ -279,13 +279,11 @@ namespace BH.Engine.Geometry
                         {
                             check = true;
                         }
-                        else
-                            check = false;
                     }
                     else
                     {
-                        Line ln1 = Create.Line(resultList[resultList.Count - 1].IEndPoint(), ((resultList[resultList.Count - 1].IEndDir() / resultList[resultList.Count - 1].IEndDir().Length()) * 10 * Math.Abs(offset)));
-                        Line ln2 = Create.Line(crvs[i % crvs.Count].IStartPoint(), (-1)*((crvs[i % crvs.Count].IStartDir() / crvs[i % crvs.Count].IStartDir().Length()) * 10 * Math.Abs(offset)));
+                        Line ln1 = Create.Line(resultList[resultList.Count - 1].IEndPoint(), ((resultList[resultList.Count - 1].IEndDir() / resultList[resultList.Count - 1].IEndDir().Length()) * 100 * Math.Abs(offset)));
+                        Line ln2 = Create.Line(crvs[i % crvs.Count].IStartPoint(), (-1)*((crvs[i % crvs.Count].IStartDir() / crvs[i % crvs.Count].IStartDir().Length()) * 100 * Math.Abs(offset)));
                         ln1.Infinite = false;
                         ln2.Infinite = false;
                     if (resultList[resultList.Count - 1] is Line)
@@ -304,8 +302,6 @@ namespace BH.Engine.Geometry
                         {
                             check = true;
                         }
-                        else
-                            check = false;
                     }
                     if (check)
                     {
