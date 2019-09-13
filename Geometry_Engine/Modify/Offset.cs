@@ -222,8 +222,6 @@ namespace BH.Engine.Geometry
                         intersections[i + 1][1] = intersections[i][0];
                         crvs[i]=crvs[i].IExtend(intersections[i][0], intersections[i][1]);
                         crvs[i + 1]= crvs[i + 1].IExtend(intersections[i + 1][0], intersections[i + 1][1]);
-                        crvs.Reverse(i, 2);
-                        intersections.Reverse(i, 2);
                     }
                 }
             }
