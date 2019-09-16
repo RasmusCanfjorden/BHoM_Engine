@@ -197,6 +197,26 @@ namespace BH.Engine.Geometry
                     lngstIndex = i;
                 }
             }
+            Line tmpLn = null;
+            for (int i = 0; i < crvs.Count - 1; i++)
+            {
+                if (crvs[i] is Line && crvs[(i + 1) % crvs.Count] is Line)
+                {
+                    tmpLn = Create.Line(crvs[i].IStartPoint(), -crvs[i].IStartDir() / crvs[i].IStartDir().Length() * Math.Abs(offset * offset * 5));
+                    tmpLn.Infinite = false;
+                    if (!((Line)crvs[i]).LineIntersection((Line)crvs[(i + 1) % crvs.Count], true).IsOnCurve(tmpLn))
+                    {
+                        crvs[i]=crvs[i].IExtend(crvs[i].IStartPoint(), ((Line)crvs[i]).LineIntersection((Line)crvs[(i + 1) % crvs.Count], true));
+                        crvs[i + 1] = crvs[i + 1].IExtend(crvs[i].IEndPoint(), crvs[i + 1].IEndPoint());
+                    }
+                    else
+                    {
+                        crvs[i] = crvs[i].IExtend(((Line)crvs[i]).LineIntersection((Line)crvs[(i + 1) % crvs.Count], true), crvs[i].IEndPoint());
+                        crvs[i + 1] = crvs[i + 1].IExtend(crvs[i + 1].IStartPoint(), ((Line)crvs[i]).LineIntersection((Line)crvs[(i + 1) % crvs.Count], true));
+                        crvs.Reverse(i, 2);
+                    }
+                }
+            }
             List<Point> Pts = new List<Point>();
             List<Point[]> intersections = new List<Point[]>();
             for (int i = 0; i < crvs.Count; i++)
@@ -204,26 +224,6 @@ namespace BH.Engine.Geometry
                 intersections.Add(new Point[2]);
                 intersections[i][0] = crvs[i].IStartPoint();
                 intersections[i][1] = crvs[i].IEndPoint();
-            }
-            for(int i=0;i<crvs.Count-1;i++)
-            {
-                if(crvs[i] is Line && crvs[(i+1)%crvs.Count] is Line)
-                {
-                    if(((Line)crvs[i]).LineIntersection((Line)crvs[(i+1)%crvs.Count],true).Distance(crvs[i].IEndPoint())< ((Line)crvs[i]).LineIntersection((Line)crvs[(i + 1) % crvs.Count], true).Distance(crvs[i].IStartPoint()))
-                    {
-                        intersections[i][1]= ((Line)crvs[i]).LineIntersection((Line)crvs[(i + 1) % crvs.Count], true);
-                        intersections[i + 1][0] = intersections[i][1];
-                        crvs[i]=crvs[i].IExtend(intersections[i][0], intersections[i][1]);
-                        crvs[i+1]=crvs[i+1].IExtend(intersections[i+1][0], intersections[i+1][1]);
-                    }
-                    else
-                    {
-                        intersections[i][0] = ((Line)crvs[i]).LineIntersection((Line)crvs[(i + 1) % crvs.Count], true);
-                        intersections[i + 1][1] = intersections[i][0];
-                        crvs[i]=crvs[i].IExtend(intersections[i][0], intersections[i][1]);
-                        crvs[i + 1]= crvs[i + 1].IExtend(intersections[i + 1][0], intersections[i + 1][1]);
-                    }
-                }
             }
             for (int i = 0; i < crvs.Count; i++)
             {
@@ -298,6 +298,7 @@ namespace BH.Engine.Geometry
                 resultList.Add(crvs[0]);
 
             }
+            int lastIndexUsed = lngstIndex;
             for (int i = lngstIndex + 1; i < lngstIndex + crvs.Count; i++)
             {
                 changed = false;
